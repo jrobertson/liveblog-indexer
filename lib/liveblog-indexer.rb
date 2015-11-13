@@ -19,7 +19,12 @@ class LiveBlogIndexer
     end
 
     @xws = XWS.new
-    @url_index = {}    
+        
+    @url_index = if urls_indexed and File.exists? urls_indexed then
+      JSON.parse(File.read(urls_indexed))
+    else
+      {}
+    end
 
   end
 
@@ -40,11 +45,10 @@ class LiveBlogIndexer
 
       url = "%s/#%s" % [link[/^https?:\/\/[^\/]+(.*)(?=\/$)/,1], \
                                                        section.attributes[:id]]
-
       h = @xws.scan section.element('details')
       
       h.each do |k, v|
-
+        
         word, count = k, v
 
         keyword = @master[word]
@@ -61,6 +65,8 @@ class LiveBlogIndexer
         end # /keyword
       end # /h
     end # /section
+    
+    true
   end # /add_index
   
   def crawl(location)
@@ -81,14 +87,16 @@ class LiveBlogIndexer
   private
   
   def index_file(location)
-
+    
+    return if @url_index.has_key? location
+    
     puts 'indexing : ' + location.inspect
     doc = Rexle.new(RXFHelper.read(location).first)
     summary = doc.root.element 'summary'
     return unless summary
     
     result = add_index doc
-    return unless result
+    return  unless result
 
     prev_day = summary.text 'prev_day'
 
@@ -98,9 +106,6 @@ class LiveBlogIndexer
       index_file(url) 
     end
   end
-  
-  def save_urlsindex(filepath)
-    
-  end
+
 
 end

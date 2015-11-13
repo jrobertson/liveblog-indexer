@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'liveblog-indexer'
-  s.version = '0.2.0'
+  s.version = '0.2.1'
   s.summary = 'This gem is under development. Generates a Liveblog indexed file in JSON format as well as Polyrex format.'
   s.authors = ['James Robertson']
   s.files = Dir['lib/liveblog-indexer.rb']
