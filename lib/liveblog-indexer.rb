@@ -9,19 +9,22 @@ require 'rxfhelper'
 
 class LiveBlogIndexer
 
-  def initialize(filepath='wordindex.json', urls_indexed: 'urls-indexed.json')
+  def initialize(filepath: '.', word_index: 'wordindex.json', \
+                                                   url_index: 'url_index.json')
 
-    @wordindex_filepath, @urls_index_filepath = filepath, urls_indexed
-    @master = if filepath and File.exists? filepath then
-      JSON.parse(File.read(filepath))
+    @filepath, @wordindex_filepath, @urls_index_filepath = filepath, \
+                                                        word_index, url_index
+    @master = if word_index and File.exists? File.join(filepath,word_index) then
+      JSON.parse(File.read(File.join(filepath, word_index)))
     else
       {}
     end
 
     @xws = XWS.new
         
-    @url_index = if urls_indexed and File.exists? urls_indexed then
-      JSON.parse(File.read(urls_indexed))
+    @url_index = if url_index and \
+                             File.exists? File.join(filepath, url_index) then
+      JSON.parse(File.read(File.join(filepath, url_index)))
     else
       {}
     end
@@ -73,39 +76,43 @@ class LiveBlogIndexer
     
     index_file location
     save @wordindex_filepath
-    File.write @urls_index_filepath, @url_index.to_json
+    File.write File.join(@filepath, @urls_index_filepath), @url_index.to_json
     
   end  
 
-  def save(filepath=nil)
+  def save(filename='wordindex.json')
 
-    File.write filepath, @master.to_json
-    puts 'saved ' + File.basename(filepath)
+    File.write File.join(@filepath, filename), @master.to_json
+    puts 'saved ' + filename
 
   end
   
   private
   
   def index_file(location)
-    
+
     return if @url_index.has_key? location
     
-    puts 'indexing : ' + location.inspect
-    doc = Rexle.new(RXFHelper.read(location).first)
+    begin
+      doc = Rexle.new(RXFHelper.read(location).first)
+    rescue
+      return
+    end
+    
     summary = doc.root.element 'summary'
     return unless summary
     
     result = add_index doc
+    
     return  unless result
+    @url_index[location] = {last_indexed: Time.now}    
 
     prev_day = summary.text 'prev_day'
 
     if prev_day then
       url = prev_day + 'formatted.xml'
-      @url_index[url] = {last_indexed: Time.now}
-      index_file(url) 
+      index_file(url)
     end
   end
-
 
 end
