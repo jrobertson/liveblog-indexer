@@ -83,6 +83,10 @@ class LiveBlogIndexer
   def inspect()
     "#<LiveBlogIndexer:#{self.object_id}>"
   end
+  
+  def keys()
+    @master.keys
+  end  
 
   def save(filename='wordindex.json')
 
