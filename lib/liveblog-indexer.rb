@@ -129,7 +129,7 @@ class LiveBlogIndexer
     key = grepped.delete keyword
     r.concat add_links(h[key].keys) if key
     
-    r.concat grepped.map {|x| add_links(h[x].keys)}
+    r.concat grepped.flat_map {|x| add_links(h[x].keys)}
     
     return r.uniq
     
