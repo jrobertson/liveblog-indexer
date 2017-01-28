@@ -78,13 +78,57 @@ class LiveBlogIndexer
     save @wordindex_filepath
     File.write File.join(@filepath, @urls_index_filepath), @url_index.to_json
     
-  end  
+  end
+
+  def inspect()
+    "#<LiveBlogIndexer:#{self.object_id}>"
+  end
 
   def save(filename='wordindex.json')
 
     File.write File.join(@filepath, filename), @master.to_json
     puts 'saved ' + filename
 
+  end
+  
+  # search the word_index file with a keyword e.g. hdmi
+  # results are sorted by exact match with a hashtag, exact keyword match, 
+  # followed by words which contain the keyword e.g. micro-hdmi
+  #
+  # links for each result are sorted by date
+  # 
+  def search(keyword)
+
+    def add_links(a)
+
+      a.sort_by do |uri|
+
+        string = uri[/^\/liveblog\/(\d{4}\/\w{3}\/\d+)/,1].gsub('/','')
+        Date.strptime(string, "%Y%b%d")
+        
+      end.reverse
+
+    end        
+    
+    h = @master
+    grepped = h.keys.grep /#{keyword}/i
+    # e.g. => ["hdmi=safe", "hdmi", "micro-hdmi", "#hdmi"]
+
+    # sort results by importance
+    r = []
+
+    # hashtag should be first
+    key = grepped.delete '#' + keyword
+    r.concat add_links(h[key].keys) if key
+
+    # the word on its own
+    key = grepped.delete keyword
+    r.concat add_links(h[key].keys) if key
+    
+    r.concat grepped.map {|x| add_links(h[x].keys)}
+    
+    return r.uniq
+    
   end
   
   private
